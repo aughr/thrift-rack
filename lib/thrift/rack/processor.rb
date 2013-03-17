@@ -4,7 +4,7 @@ module Thrift
   module Rack
     module Processor
       def process(request, iprot, oprot)
-        name, *, seqid  = iprot.read_message_begin
+        name, _, seqid  = iprot.read_message_begin
         if respond_to?("process_#{name}")
           begin
             call_function(request, name, seqid, iprot, oprot)
