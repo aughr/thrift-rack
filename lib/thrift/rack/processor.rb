@@ -3,11 +3,11 @@ require 'thrift'
 module Thrift
   module Rack
     module Processor
-      def process(iprot, oprot)
+      def process(request, iprot, oprot)
         name, *, seqid  = iprot.read_message_begin
         if respond_to?("process_#{name}")
           begin
-            send("process_#{name}", seqid, iprot, oprot)
+            call_function(request, name, seqid, iprot, oprot)
             200
           rescue => e
             exception = ApplicationException.new(ApplicationException::INTERNAL_ERROR, 'Internal error: ' + e.to_s)
@@ -28,6 +28,14 @@ module Thrift
         exception.write(oprot)
         oprot.write_message_end
         oprot.trans.flush
+      end
+
+      def call_function(request, name, seqid, iprot, oprot)
+        send("process_#{name}", seqid, iprot, oprot)
+      end
+
+      def service_name
+        @service_name ||= self.class.name.split("::")[0..-2].join("::")
       end
     end
   end

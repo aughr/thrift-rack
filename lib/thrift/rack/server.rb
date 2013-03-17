@@ -3,6 +3,7 @@ require 'rack/request'
 require 'rack/response'
 
 require 'thrift/rack/processor'
+require 'thrift/rack/new_relic_processor'
 
 module Thrift
   module Rack
@@ -12,6 +13,7 @@ module Thrift
       def initialize(processor, options={})
         @processor = processor
         @processor.extend Thrift::Rack::Processor
+        @processor.extend Thrift::Rack::NewRelicProcessor if defined?(NewRelic::Agent)
         @path = options[:path] || "/"
         @protocol_factory = options[:protocol_factory] || BinaryProtocolFactory.new
       end
@@ -25,7 +27,7 @@ module Thrift
 
           transport = IOStreamTransport.new request.body, response
           protocol = @protocol_factory.get_protocol transport
-          response.status = @processor.process protocol, protocol
+          response.status = @processor.process request, protocol, protocol
           response
         else
           # empty 404
