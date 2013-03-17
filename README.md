@@ -1,6 +1,10 @@
 # Thrift::Rack
 
-TODO: Write a gem description
+A Rack interface to a Thrift service.
+
+Thrift currently provides a `MongrelHttpServer`. This works the same way
+(providing an HTTP interface to a Thrift service) but also provides
+a bit better error handling.
 
 ## Installation
 
@@ -18,7 +22,12 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+# in a Rack::Builder context
+
+processor = YourThriftService::Processor.new YourThriftHandler.new
+run Thrift::Rack::Server.new processor, :path => "/your_service"
+```
 
 ## Contributing
 
