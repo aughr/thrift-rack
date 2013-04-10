@@ -1,19 +1,22 @@
-require 'thrift'
 require 'rack/request'
 require 'rack/response'
-
-require 'thrift/rack/processor'
 
 module Thrift
   module Rack
     class Server
+      java_import "org.apache.thrift.TProcessor"
+      java_import "org.apache.thrift.protocol.TCompactProtocol"
+      java_import "org.apache.thrift.transport.TIOStreamTransport"
+
+      java_import 'org.jruby.util.IOInputStream'
+      java_import 'java.io.ByteArrayOutputStream'
+
       THRIFT_CONTENT_TYPE = "application/x-thrift".freeze
 
       def initialize(processor, options={})
         @processor = processor
-        @processor.extend Thrift::Rack::Processor
         @path = options[:path] || "/"
-        @protocol_factory = options[:protocol_factory] || BinaryProtocolFactory.new
+        @protocol_factory = options[:protocol_factory] || TBinaryProtocol::Factory.new
       end
 
       def call(env)
@@ -23,10 +26,12 @@ module Thrift
           response = ::Rack::Response.new
           response["Content-Type"] = THRIFT_CONTENT_TYPE
 
-          transport = IOStreamTransport.new request.body, response
+          output = ByteArrayOutputStream.new(2048)
+          transport = TIOStreamTransport.new IOInputStream.new(request.body), output
           protocol = @protocol_factory.get_protocol transport
-          response.status = @processor.process protocol, protocol
-          response
+          response.status = @processor.process(protocol, protocol) ? 200 : 500
+          response.write(output.toByteArray)
+          response.to_a
         else
           # empty 404
           [404, {}, []]
