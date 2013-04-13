@@ -15,14 +15,13 @@ module Thrift
 
       def initialize(processor, options={})
         @processor = processor
-        @path = options[:path] || "/"
         @protocol_factory = options[:protocol_factory] || TBinaryProtocol::Factory.new
       end
 
       def call(env)
         request = ::Rack::Request.new env
 
-        if request.post? && request.path == @path
+        if request.post?
           response = ::Rack::Response.new
           response["Content-Type"] = THRIFT_CONTENT_TYPE
 
